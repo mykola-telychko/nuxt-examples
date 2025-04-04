@@ -1,2 +1,3 @@
 # nuxt-examples
+
 try nuxt
