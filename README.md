@@ -13,3 +13,13 @@ pnpm install
 npm run dev
 
 http://localhost:3000/api/hi
+
+npm install mysql2
+
+# nuxt-app/server/utils
+mk dir utils 
+
+touch db.js
+code db.ts
+
+mkdir server/api/products.js

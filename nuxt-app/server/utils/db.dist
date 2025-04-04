@@ -1,0 +1,31 @@
+
+// rename on db.ts and add own credentials
+
+
+import mysql from 'mysql2/promise';
+import { Pool, PoolConnection } from 'mysql2/promise';
+
+interface DatabaseConfig {
+  host: string;
+  user: string;
+  password?: string;
+  database: string;
+}
+
+const dbConfig: DatabaseConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'test'
+};
+
+let pool: Pool | undefined;
+
+async function getConnection(): Promise<PoolConnection> {
+  if (!pool) {
+    pool = mysql.createPool(dbConfig);
+  }
+  return await pool.getConnection();
+}
+
+export default getConnection;
