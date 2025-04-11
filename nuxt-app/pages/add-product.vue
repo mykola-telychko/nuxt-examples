@@ -1,16 +1,16 @@
 <template>
     <div>
-      <h1>Додати новий продукт</h1>
+      <h1>Add new product</h1>
       <form @submit.prevent="addProduct">
         <div>
-          <label for="name">Назва:</label>
+          <label for="name">name:</label>
           <input type="text" id="name" v-model="newProduct.name" required>
         </div>
         <div>
-          <label for="price">Ціна:</label>
+          <label for="price">price:</label>
           <input type="number" id="price" v-model="newProduct.price" step="0.01" required>
         </div>
-        <button type="submit">Додати продукт</button>
+        <button type="submit">add product</button>
         <div v-if="message" class="message">{{ message }}</div>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
@@ -38,18 +38,17 @@
         // Додаємо обробку статусу відповіді
         onResponse({ request, response, options }) {
           if (response.status >= 200 && response.status < 300) {
-            // Успішна відповідь
             return response;
           } else {
             // Неуспішна відповідь, але без помилки fetch
-            const error = new Error(`Помилка сервера: ${response.status} ${response.statusText}`);
+            const error = new Error(`Server error_/: ${response.status} ${response.statusText}`);
             error.response = response;
             throw error;
           }
         },
         onResponseError({ request, response, options }) {
           // Помилка на рівні HTTP (наприклад, 4xx або 5xx)
-          const error = new Error(`Помилка сервера: ${response.status} ${response.statusText}`);
+          const error = new Error(`Server error_: ${response.status} ${response.statusText}`);
           error.response = response;
           throw error;
         }

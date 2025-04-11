@@ -1,3 +1,7 @@
+update front and back - work only with number (not float in form fields)
+
+
+// --------------------------
 2. Створення серверного API-маршруту:
 
 Nuxt.js автоматично обробляє файли в каталозі server/api як серверні API-маршрути. Створіть файл server/api/hello.js (або server/api/hello.ts, якщо ви використовуєте TypeScript) з наступним вмістом:
