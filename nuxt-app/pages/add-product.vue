@@ -1,89 +1,107 @@
 <template>
-    <div>
-      <h1>Add new product</h1>
-      <form @submit.prevent="addProduct">
-        <div>
-          <label for="name">name:</label>
-          <input type="text" id="name" v-model="newProduct.name" required>
-        </div>
-        <div>
-          <label for="price">price:</label>
-          <input type="number" id="price" v-model="newProduct.price" step="0.01" required>
-        </div>
-        <button type="submit">add product</button>
-        <div v-if="message" class="message">{{ message }}</div>
-        <div v-if="error" class="error">{{ error }}</div>
-      </form>
-    </div>
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  
-  const newProduct = ref({
-    name: '',
-    price: null
-  });
-  const message = ref('');
-  const error = ref('');
-  
-  const addProduct = async () => {
-    message.value = '';
-    error.value = '';
-  
-    try {
-      const response = await $fetch('/api/products/add', {
-        method: 'POST',
-        body: newProduct.value,
-        // Додаємо обробку статусу відповіді
-        onResponse({ request, response, options }) {
-          if (response.status >= 200 && response.status < 300) {
-            return response;
-          } else {
-            // Неуспішна відповідь, але без помилки fetch
-            const error = new Error(`Server error_/: ${response.status} ${response.statusText}`);
-            error.response = response;
-            throw error;
-          }
-        },
-        onResponseError({ request, response, options }) {
-          // Помилка на рівні HTTP (наприклад, 4xx або 5xx)
-          const error = new Error(`Server error_: ${response.status} ${response.statusText}`);
-          error.response = response;
-          throw error;
+  <div>
+    <h1>Add new product</h1>
+
+    <!-- Форма додавання продукту -->
+    <form @submit.prevent="addProduct">
+      <div>
+        <label for="name">name:</label>
+        <input type="text" id="name" v-model="newProduct.name" required>
+      </div>
+      <div>
+        <label for="price">price:</label>
+        <input type="number" id="price" v-model="newProduct.price" step="0.01" required>
+      </div>
+      <button type="submit">add product</button>
+      <div v-if="message" class="message">{{ message }}</div>
+      <div v-if="error" class="error">{{ error }}</div>
+    </form>
+
+    
+ <!-- Список існуючих продуктів -->
+<div v-if="products.length" style="margin-top: 20px;">
+  <h2>Current Products</h2>
+  <ul>
+    <li v-for="product in products" :key="product.id" style="display: flex; align-items: center; justify-content: space-between; max-width: 400px;">
+      <span>{{ product.name }} - ${{ product.price }}</span>
+      <button @click="deleteProduct(product.id)" style="color: red; background: none; border: none; cursor: pointer;">✖</button>
+    </li>
+  </ul>
+</div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const newProduct = ref({ name: '', price: null });
+const message = ref('');
+const error = ref('');
+const products = ref([]); // ← зберігає продукти з бази
+
+// Отримати всі продукти з бази
+const fetchProducts = async () => {
+  try {
+    const data = await $fetch('/api/products');
+    products.value = data;
+  } catch (err) {
+    error.value = 'Не вдалося завантажити список продуктів.';
+    console.error('Fetch products error:', err);
+  }
+};
+
+const addProduct = async () => {
+  message.value = '';
+  error.value = '';
+
+  try {
+    const response = await $fetch('/api/products/add', {
+      method: 'POST',
+      body: newProduct.value,
+      onResponse({ response }) {
+        if (response.status < 200 || response.status >= 300) {
+          throw new Error(`Server error: ${response.status}`);
         }
-      });
-  
-      // Якщо запит був успішним (без викидання помилки в onResponse або onResponseError)
-      if (response && response.id && response.message) {
-        message.value = response.message;
-        newProduct.value = { name: '', price: null }; // Очистити форму після успіху
-      } else if (response && response.error) {
-        error.value = response.error; // Обробка помилки, яку може повернути сервер у JSON
-      } else {
-        error.value = 'Невідома помилка при додаванні продукту.';
+      },
+      onResponseError({ response }) {
+        throw new Error(`Server error: ${response.status}`);
       }
-  
-    } catch (err) {
-      error.value = err.message || 'Сталася помилка при відправці запиту.';
-      console.error('Помилка додавання продукту:', err);
-      if (err.response) {
-        const errorData = await err.response.json().catch(() => null);
-        if (errorData && errorData.statusMessage) {
-          error.value = errorData.statusMessage;
-        }
-      }
+    });
+
+    if (response?.id && response?.message) {
+      message.value = response.message;
+      newProduct.value = { name: '', price: null };
+      await fetchProducts(); // оновити список
+    } else {
+      error.value = 'Невідома помилка при додаванні продукту.';
     }
-  };
-  </script>
-  
-  <style scoped>
-  .message {
-    color: green;
-    margin-top: 10px;
+  } catch (err) {
+    error.value = err.message || 'Сталася помилка при відправці запиту.';
+    console.error('Помилка додавання продукту:', err);
   }
-  .error {
-    color: red;
-    margin-top: 10px;
+};
+
+const deleteProduct = async (id) => {
+  try {
+    // await $fetch(`/api/products/remove/${id}`, { method: 'DELETE' });
+    await $fetch(`/api/products/${id}`, { method: 'DELETE' });
+    await fetchProducts(); // оновлюємо список після видалення
+  } catch (err) {
+    error.value = 'Помилка при видаленні продукту.';
+    console.error('Delete error:', err);
   }
-  </style>
+};
+
+onMounted(fetchProducts);
+</script>
+
+<style scoped>
+.message {
+  color: green;
+  margin-top: 10px;
+}
+.error {
+  color: red;
+  margin-top: 10px;
+}
+</style>
